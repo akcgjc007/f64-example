@@ -50,3 +50,21 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+      
+      - run:
+          name: Install check_contract
+          # Uses --debug for compilation speed
+          command: cargo install --debug --version 0.14.0 --features iterator --example check_contract -- cosmwasm-vm
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target
+          key: cargocache-wasm-rust:1.51.0-{{ checksum "~/project/Cargo.lock" }}
+      - run:
+          name: Check wasm contracts
+          command: |
+            for W in ./target/wasm32-unknown-unknown/release/*.wasm
+            do
+              echo -n "Checking `basename $W`... "
+              check_contract $W
+            done
